@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cineflix Admin Panel</title>
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --red:#E8262A;--red-dark:#B01E21;--bg:#0A0A0A;--bg2:#111111;--bg3:#1A1A1A;--bg4:#222222;
+  --text:#FFFFFF;--text2:#BBBBBB;--text3:#777777;--yellow:#F5C518;
+}
+body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;overflow-x:hidden;min-height:100vh}
+a{text-decoration:none;color:inherit}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--red);border-radius:2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ADMIN PAGE */
+.admin-page{display:none;min-height:100vh;padding:24px 16px 40px;max-width:720px;margin:0 auto}
+.admin-header{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;color:var(--red);margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.admin-card{background:var(--bg2);border:1px solid var(--bg3);border-radius:12px;padding:16px;margin-bottom:16px}
+.admin-card-title{font-size:14px;font-weight:800;margin-bottom:14px;color:var(--text);display:flex;align-items:center;gap:8px}
+.admin-card-title svg{width:16px;height:16px;fill:none;stroke:var(--red);stroke-width:2}
+.admin-input{width:100%;background:var(--bg3);border:1px solid var(--bg4);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;font-family:'Nunito',sans-serif;outline:none;margin-bottom:10px}
+.admin-input:focus{border-color:rgba(232,38,42,0.5)}
+.admin-select{width:100%;background:var(--bg3);border:1px solid var(--bg4);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;font-family:'Nunito',sans-serif;outline:none;margin-bottom:10px;appearance:none;cursor:pointer}
+.admin-label{font-size:11px;color:var(--text3);font-weight:700;letter-spacing:1px;margin-bottom:6px;display:block}
+.admin-btn{background:var(--red);color:#fff;border:none;border-radius:8px;padding:12px 20px;font-size:13px;font-weight:700;font-family:'Nunito',sans-serif;cursor:pointer;transition:0.2s;width:100%}
+.admin-btn:hover{background:var(--red-dark)}
+.admin-btn.secondary{background:var(--bg3);color:var(--text2);border:1px solid var(--bg4)}
+.admin-btn.secondary:hover{border-color:var(--red);color:var(--red)}
+.admin-movie-list{display:flex;flex-direction:column;gap:10px}
+.admin-movie-item{background:var(--bg3);border-radius:8px;padding:12px;display:flex;align-items:center;gap:12px}
+.admin-movie-poster{width:40px;height:60px;border-radius:4px;object-fit:cover;background:var(--bg4)}
+.admin-movie-info{flex:1}
+.admin-movie-title{font-size:13px;font-weight:700}
+.admin-movie-meta{font-size:11px;color:var(--text3);margin-top:3px}
+.admin-movie-actions{display:flex;gap:8px}
+.admin-movie-btn{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid var(--bg4);background:var(--bg4)}
+.admin-movie-btn svg{width:14px;height:14px;fill:none;stroke:var(--text2);stroke-width:2}
+.admin-movie-btn.del{border-color:rgba(232,38,42,0.3)}
+.admin-movie-btn.del:hover{background:var(--red);border-color:var(--red)}
+.admin-movie-btn.del:hover svg{stroke:#fff}
+.admin-movie-btn.edit:hover{background:var(--yellow);border-color:var(--yellow)}
+.admin-movie-btn.edit:hover svg{stroke:#000}
+.admin-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.admin-tab{padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:var(--bg3);color:var(--text2);border:1px solid transparent;transition:0.2s}
+.admin-tab.active{border-color:var(--red);color:var(--red)}
+.tmdb-search-result{display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg3);border-radius:8px;cursor:pointer;margin-bottom:8px;border:1px solid var(--bg4);transition:0.2s}
+.tmdb-search-result:hover{border-color:var(--red)}
+.tmdb-search-result img{width:40px;height:60px;border-radius:4px;object-fit:cover}
+.tmdb-result-title{font-size:13px;font-weight:700}
+.tmdb-result-year{font-size:11px;color:var(--text3)}
+.tmdb-results{max-height:300px;overflow-y:auto;margin-top:10px}
+.tmdb-results::-webkit-scrollbar{width:3px}
+.tmdb-results::-webkit-scrollbar-thumb{background:var(--red)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.stat-card{background:var(--bg2);border:1px solid var(--bg3);border-radius:10px;padding:14px;text-align:center}
+.stat-card.full{grid-column:1/-1}
+.stat-num{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--red)}
+.stat-label{font-size:10px;color:var(--text3);letter-spacing:1px;font-weight:700}
+.chart-range{display:flex;gap:8px;margin-bottom:14px}
+.chart-range-btn{padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;background:var(--bg3);color:var(--text2);border:1px solid transparent;transition:0.2s}
+.chart-range-btn.active{border-color:var(--red);color:var(--red)}
+.chart-legend{display:flex;gap:16px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.chart-legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);font-weight:700}
+.chart-legend-dot{width:9px;height:9px;border-radius:50%}
+
+/* LOGIN */
+.login-overlay{position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,0.9);display:none;align-items:center;justify-content:center;padding:20px}
+.login-overlay.show{display:flex}
+.login-card{background:var(--bg2);border:1px solid rgba(232,38,42,0.3);border-radius:16px;padding:28px 20px;max-width:320px;width:100%;text-align:center}
+.login-logo{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:3px;margin-bottom:4px}
+.login-logo span{color:var(--red)}
+.login-sub{font-size:11px;color:var(--text3);letter-spacing:2px;margin-bottom:20px}
+.login-input{width:100%;background:var(--bg3);border:1px solid var(--bg4);border-radius:8px;padding:12px;color:var(--text);font-size:13px;font-family:'Nunito',sans-serif;outline:none;margin-bottom:10px}
+.login-input:focus{border-color:rgba(232,38,42,0.5)}
+.login-btn{width:100%;background:var(--red);color:#fff;border:none;border-radius:8px;padding:13px;font-size:13px;font-weight:700;font-family:'Nunito',sans-serif;cursor:pointer}
+.login-error{color:var(--red);font-size:12px;margin-bottom:10px;display:none}
+
+/* TOAST */
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--bg4);color:var(--text);font-size:13px;font-weight:600;padding:10px 20px;border-radius:20px;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+
+/* BACK BUTTON */
+.back-btn{background:rgba(255,255,255,0.06);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid rgba(255,255,255,0.1)}
+.back-btn svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- LOGIN -->
+<div class="login-overlay show" id="adminLogin">
+  <div class="login-card">
+    <div class="login-logo">Cine<span>flix</span></div>
+    <div class="login-sub">ADMIN PANEL</div>
+    <div class="login-error" id="loginError">Incorrect password!</div>
+    <input class="login-input" type="password" id="loginPassword" placeholder="Password" onkeydown="if(event.key==='Enter')doAdminLogin()">
+    <button class="login-btn" onclick="doAdminLogin()">LOGIN</button>
+    <div style="margin-top:12px;font-size:12px;color:var(--text3);cursor:pointer" onclick="closeAdminLogin()">← Back to site</div>
+  </div>
+</div>
+
+<!-- ADMIN PAGE -->
+<div class="admin-page" id="adminPage">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+    <div class="back-btn" style="position:static;width:36px;height:36px" onclick="window.location.href='https://cineflix-lk.vercel.app/'">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <div class="admin-header" style="margin-bottom:0">
+      <svg viewBox="0 0 24 24" style="width:24px;height:24px;fill:none;stroke:var(--red);stroke-width:2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Admin Panel
+    </div>
+    <div style="margin-left:auto;font-size:11px;color:var(--text3)" id="adminUserLabel"></div>
+    <div style="font-size:12px;color:var(--red);cursor:pointer;font-weight:700" onclick="adminLogout()">Logout</div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-num" id="statVisitors">0</div><div class="stat-label">VISITORS</div></div>
+    <div class="stat-card"><div class="stat-num" id="statViews">0</div><div class="stat-label">TOTAL VIEWS</div></div>
+    <div class="stat-card"><div class="stat-num" id="statDownloads">0</div><div class="stat-label">DOWNLOADS</div></div>
+    <div class="stat-card"><div class="stat-num" id="statMovies">0</div><div class="stat-label">MOVIES</div></div>
+    <div class="stat-card full"><div class="stat-num" id="statComments">0</div><div class="stat-label">COMMENTS</div></div>
+  </div>
+
+  <div class="admin-tabs">
+    <div class="admin-tab active" onclick="switchAdminTab('add',this)">+ Add Movie</div>
+    <div class="admin-tab" onclick="switchAdminTab('manage',this)">Manage</div>
+    <div class="admin-tab" onclick="switchAdminTab('analytics',this)">📊 Analytics</div>
+    <div class="admin-tab" onclick="switchAdminTab('requests',this)">📝 Requests</div>
+    <div class="admin-tab" onclick="switchAdminTab('settings',this)">Settings</div>
+  </div>
+
+  <!-- ADD MOVIE TAB -->
+  <div id="adminTabAdd">
+    <div class="admin-card">
+      <div class="admin-card-title">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Search TMDB
+      </div>
+      <div style="display:flex;gap:8px">
+        <input class="admin-input" id="tmdbSearch" placeholder="Movie or TV show name..." style="margin-bottom:0;flex:1" onkeyup="if(event.key==='Enter')searchTMDB()">
+        <button class="admin-btn" style="width:auto;padding:10px 16px" onclick="searchTMDB()">Search</button>
+      </div>
+      <div class="tmdb-results" id="tmdbResults" style="margin-top:10px"></div>
+    </div>
+
+    <div class="admin-card" id="addMovieForm" style="display:none">
+      <div class="admin-card-title">
+        <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Movie Details
+      </div>
+      <label class="admin-label">Title</label>
+      <input class="admin-input" id="addTitle" placeholder="Movie Title">
+      <label class="admin-label">Year</label>
+      <input class="admin-input" id="addYear" placeholder="2024" type="number">
+      <label class="admin-label">Genre</label>
+      <input class="admin-input" id="addGenre" placeholder="Action, Drama...">
+      <label class="admin-label">Runtime</label>
+      <input class="admin-input" id="addRuntime" placeholder="2h 15m">
+      <label class="admin-label">Rating (TMDB)</label>
+      <input class="admin-input" id="addRating" placeholder="7.5" type="number" step="0.1">
+      <label class="admin-label">Description</label>
+      <textarea class="admin-input" id="addDesc" placeholder="Movie description..." style="height:80px;resize:none"></textarea>
+      <label class="admin-label">Poster URL</label>
+      <input class="admin-input" id="addPoster" placeholder="https://...">
+      <label class="admin-label">Backdrop URL</label>
+      <input class="admin-input" id="addBackdrop" placeholder="https://...">
+      <label class="admin-label">Director</label>
+      <input class="admin-input" id="addDirector" placeholder="Christopher Nolan">
+      <label class="admin-label">Stars / Cast (comma separated)</label>
+      <input class="admin-input" id="addCast" placeholder="Actor One, Actor Two, Actor Three">
+      <label class="admin-label">Country</label>
+      <input class="admin-input" id="addCountry" placeholder="USA">
+      <label class="admin-label">Trailer URL (Youtube)</label>
+      <input class="admin-input" id="addTrailer" placeholder="https://youtube.com/watch?v=...">
+      <label class="admin-label">Screenshots (one URL per line, optional)</label>
+      <textarea class="admin-input" id="addScreenshots" placeholder="https://image1.jpg&#10;https://image2.jpg" style="height:70px;resize:none"></textarea>
+      <label class="admin-label">Quality</label>
+      <select class="admin-select" id="addQuality">
+        <option value="WEB-RIP">WEB-RIP</option>
+        <option value="WEB-DL">WEB-DL</option>
+        <option value="BLURAY">BLURAY</option>
+        <option value="HD-RIP">HD-RIP</option>
+        <option value="CAM">CAM</option>
+        <option value="CAMCOPY">CAMCOPY</option>
+        <option value="ORIGINAL WEB">ORIGINAL WEB</option>
+        <option value="4K">4K</option>
+      </select>
+      <label class="admin-label">Type</label>
+      <select class="admin-select" id="addType" onchange="toggleTVFields()">
+        <option value="movie">Movie</option>
+        <option value="tv">TV Series</option>
+      </select>
+
+      <!-- VIP TOGGLE -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.3);border-radius:8px;padding:10px 12px">
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:#FFD700;flex-shrink:0"><path d="M2 4l3 12h14l3-12-6 5-4-7-4 7z"/></svg>
+        <span style="font-size:12px;font-weight:700;color:#FFD700;flex:1">VIP Premium Content</span>
+        <label style="position:relative;display:inline-block;width:40px;height:22px;flex-shrink:0">
+          <input type="checkbox" id="addVip" style="opacity:0;width:0;height:0">
+          <span onclick="this.previousElementSibling.checked=!this.previousElementSibling.checked;this.style.background=this.previousElementSibling.checked?'#FFD700':'#333'" style="position:absolute;inset:0;border-radius:22px;background:#333;cursor:pointer;transition:.3s">
+            <span style="position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.3s;transform:translateX(0)"></span>
+          </span>
+        </label>
+      </div>
+
+      <!-- SUBTITLE NOTICE TOGGLE -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;background:rgba(245,197,24,.08);border:1px solid rgba(245,197,24,.3);border-radius:8px;padding:10px 12px">
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:#f5c518;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h4M15 15h2M7 11h2M13 11h4"/></svg>
+        <span style="font-size:12px;font-weight:700;color:#f5c518;flex:1">Subtitle Notice Show කරන්න</span>
+        <label style="position:relative;display:inline-block;width:40px;height:22px;flex-shrink:0">
+          <input type="checkbox" id="addShowSubNotice" style="opacity:0;width:0;height:0">
+          <span id="addShowSubNoticeSlider" onclick="this.previousElementSibling.checked=!this.previousElementSibling.checked;this.style.background=this.previousElementSibling.checked?'#f5c518':'#333'" style="position:absolute;inset:0;border-radius:22px;background:#333;cursor:pointer;transition:.3s">
+            <span style="position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.3s;transform:translateX(0)"></span>
+          </span>
+        </label>
+      </div>
+
+      <!-- TV SERIES SEASONS/EPISODES (shown only for TV) -->
+      <div id="tvSeriesSection" style="display:none;margin-bottom:14px">
+        <div class="admin-card-title" style="margin-bottom:10px">
+          <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
+          Seasons & Episodes
+        </div>
+        <div id="seasonsAdmin"></div>
+        <button class="admin-btn secondary" onclick="addSeason()" style="margin-top:8px">+ Add Season</button>
+      </div>
+      <label class="admin-label">Stream URL (optional)</label>
+      <input class="admin-input" id="addStreamUrl" placeholder="https://...mp4">
+      <label class="admin-label">Subtitle By</label>
+      <input class="admin-input" id="addSubBy" placeholder="Piratelk.com">
+      <label class="admin-label">Subtitle File URL (optional)</label>
+      <input class="admin-input" id="addSubUrl" placeholder="https://...subtitle.srt or .vtt">
+      <label class="admin-label">🔞 Adult Content (18+)?</label>
+      <div style="display:flex;gap:10px;margin-bottom:4px">
+        <label style="flex:1;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.15);border-radius:8px;padding:10px 14px;cursor:pointer">
+          <input type="radio" name="adultToggle" value="false" onchange="document.getElementById('addAdult').value='false'" style="accent-color:#E8262A" checked>
+          <span style="font-size:13px;font-weight:600;color:#ccc">No — Normal Content</span>
+        </label>
+        <label style="flex:1;display:flex;align-items:center;gap:8px;background:rgba(232,38,42,0.08);border:1.5px solid rgba(232,38,42,0.4);border-radius:8px;padding:10px 14px;cursor:pointer">
+          <input type="radio" name="adultToggle" value="true" onchange="document.getElementById('addAdult').value='true'" style="accent-color:#E8262A">
+          <span style="font-size:13px;font-weight:700;color:#E8262A">Yes — 18+ Restricted</span>
+        </label>
+      </div>
+      <select class="admin-select" id="addAdult" style="display:none">
+        <option value="false">No</option>
+        <option value="true">Yes (18+)</option>
+      </select>
+      <label class="admin-label">TMDB ID (for auto-details)</label>
+      <input class="admin-input" id="addTmdbId" placeholder="123456">
+
+      <!-- ADMIN NOTE -->
+      <div style="background:rgba(120,60,200,0.1);border:1.5px solid rgba(140,80,220,0.35);border-radius:10px;padding:12px 14px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
+          <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:#b57bee;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          <span class="admin-label" style="margin-bottom:0;color:#b57bee;letter-spacing:2px">ADMIN NOTE (Description යටින් දාම් පාට box)</span>
+        </div>
+        <textarea class="admin-input" id="addAdminNote" placeholder="Admin note type කරන්න... (movie / TV series details, special info, etc.)" style="height:90px;resize:none;border-color:rgba(140,80,220,0.4)"></textarea>
+      </div>
+
+      <!-- COLLECTION -->
+      <div style="background:rgba(232,38,42,0.06);border:1px solid rgba(232,38,42,0.2);border-radius:10px;padding:12px 14px;margin-bottom:14px">
+        <div class="admin-card-title" style="margin-bottom:10px;font-size:13px">
+          <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:var(--red);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          Collection / Series
+        </div>
+        <label class="admin-label">Collection Name</label>
+        <input class="admin-input" id="addCollection" placeholder="e.g. Harry Potter, Marvel, Fast &amp; Furious">
+        <label class="admin-label">Part Number (order in series)</label>
+        <input class="admin-input" id="addCollectionOrder" placeholder="1" type="number" min="1">
+      </div>
+      
+      <div style="margin-bottom:14px">
+        <div class="admin-card-title" style="margin-bottom:10px">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download Links
+        </div>
+        <div id="downloadLinksAdmin"></div>
+        <button class="admin-btn secondary" id="addDlLinkBtn" onclick="addDownloadLink()" style="margin-top:8px">+ Add Download Link <span style="font-size:10px;opacity:0.6">(max 3)</span></button>
+      </div>
+
+      <button class="admin-btn" onclick="saveMovie()">Save Movie to Firebase</button>
+    </div>
+  </div>
+
+  <!-- MANAGE TAB -->
+  <div id="adminTabManage" style="display:none">
+    <div class="admin-card">
+      <div class="admin-card-title">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        All Movies
+      </div>
+      <div class="admin-movie-list" id="adminMovieList">
+        <div style="color:var(--text3);font-size:13px;text-align:center;padding:20px">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANALYTICS TAB -->
+  <div id="adminTabAnalytics" style="display:none">
+    <div class="admin-card">
+      <div class="admin-card-title">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Visitors, Views &amp; Downloads
+      </div>
+      <div class="chart-range">
+        <div class="chart-range-btn active" data-days="7" onclick="setAnalyticsRange(7,this)">7 Days</div>
+        <div class="chart-range-btn" data-days="14" onclick="setAnalyticsRange(14,this)">14 Days</div>
+        <div class="chart-range-btn" data-days="30" onclick="setAnalyticsRange(30,this)">30 Days</div>
+      </div>
+      <div style="position:relative;height:260px">
+        <canvas id="analyticsChart"></canvas>
+      </div>
+      <div class="chart-legend">
+        <div class="chart-legend-item"><span class="chart-legend-dot" style="background:#F5C518"></span>Visitors</div>
+        <div class="chart-legend-item"><span class="chart-legend-dot" style="background:#E8262A"></span>Views</div>
+        <div class="chart-legend-item"><span class="chart-legend-dot" style="background:#3B82F6"></span>Downloads</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS TAB -->
+  <div id="adminTabSettings" style="display:none">
+    <div class="admin-card">
+      <div class="admin-card-title">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:var(--yellow);stroke-width:2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Banner / Announcement
+      </div>
+      <label class="admin-label">Banner Message</label>
+      <input class="admin-input" id="settingBannerText" placeholder="e.g. 🚀 New movies added! Check out the latest releases...">
+      <label class="admin-label">Banner Type</label>
+      <select class="admin-select" id="settingBannerType">
+        <option value="info">🔵 Info (Blue)</option>
+        <option value="warning">🟡 Warning (Yellow)</option>
+        <option value="success">🟢 Success (Green)</option>
+        <option value="red">🔴 Alert (Red)</option>
+      </select>
+      <label class="admin-label">Banner Icon (emoji)</label>
+      <input class="admin-input" id="settingBannerIcon" placeholder="📢" maxlength="4">
+      <label class="admin-label">Banner Link URL (optional)</label>
+      <input class="admin-input" id="settingBannerLink" placeholder="https://... (leave empty for no link)">
+      <label class="admin-label">Link Label (optional)</label>
+      <input class="admin-input" id="settingBannerLinkLabel" placeholder="View →">
+      <label class="admin-label">Scrolling Marquee?</label>
+      <select class="admin-select" id="settingBannerScroll">
+        <option value="false">No (Static Text)</option>
+        <option value="true">Yes (Scrolling)</option>
+      </select>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="admin-btn" onclick="saveBanner()" style="flex:1">Show Banner</button>
+        <button class="admin-btn secondary" onclick="hideBanner()" style="flex:1;background:transparent;border:1px solid var(--bg4);color:var(--text2)">Hide Banner</button>
+      </div>
+    </div>
+    <div class="admin-card">
+      <div class="admin-card-title">
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:#b57bee;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <span style="color:#b57bee">Set Details (Admin Note)</span>
+      </div>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.6">Movie / TV Series එකක Description box යටින් දාම් පාට box එකේ admin note type කරන්න.</p>
+      <label class="admin-label">Movie / TV Series Title Search</label>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input class="admin-input" id="setDetailsSearch" placeholder="Title search කරන්න..." style="margin-bottom:0;flex:1" oninput="searchSetDetails(this.value)">
+      </div>
+      <div id="setDetailsResults" style="max-height:180px;overflow-y:auto;margin-bottom:10px"></div>
+      <div id="setDetailsForm" style="display:none">
+        <div style="background:var(--bg3);border-radius:8px;padding:10px 12px;margin-bottom:10px;display:flex;align-items:center;gap:10px">
+          <img id="setDetailsPoster" src="" style="width:36px;height:52px;border-radius:4px;object-fit:cover;background:var(--bg4)">
+          <div>
+            <div id="setDetailsTitle" style="font-size:13px;font-weight:700"></div>
+            <div id="setDetailsMeta" style="font-size:10px;color:var(--text3);margin-top:2px"></div>
+          </div>
+        </div>
+        <label class="admin-label" style="color:#b57bee">Admin Note (Description යටින් දාම් පාට box)</label>
+        <textarea class="admin-input" id="setDetailsNote" placeholder="ඕනෑ ම detail type කරන්න... e.g. 'Season 2 coming soon!', download info, etc." style="height:100px;resize:none;border-color:rgba(140,80,220,0.4)"></textarea>
+        <button class="admin-btn" onclick="saveSetDetails()" style="background:rgba(120,60,200,0.8)">💾 Save Note</button>
+        <button class="admin-btn secondary" onclick="clearSetDetails()" style="margin-top:8px">✕ Clear Note</button>
+      </div>
+    </div>
+    <div class="admin-card">
+      <div class="admin-card-title">
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:#60a5fa;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+        <span style="color:#60a5fa">Fix Missing Trailers</span>
+      </div>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.6">පරණ movies/TV series වලට Trailer URL එක දාලා නැහැ නම් (TMDB ID එක save වෙලා තියනවා නම් විතරයි), මෙතනින් click එකකින් TMDB එකෙන් auto fetch කරගන්න පුළුවන්.</p>
+      <button class="admin-btn" onclick="fixMissingTrailers()" style="background:rgba(96,165,250,0.15);border:1px solid rgba(96,165,250,0.5);color:#60a5fa">🎬 Scan &amp; Fix Missing Trailers</button>
+      <div id="fixTrailersStatus" style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6"></div>
+    </div>
+    <div class="admin-card">
+      <div class="admin-card-title">
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:#22c55e;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span style="color:#22c55e">Fix Missing Cast & Director</span>
+      </div>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.6">පරණ movies/TV series වලට Cast, Director, Year දාලා නැහැ නම් (TMDB ID එක save වෙලා තියනවා නම් විතරයි), මෙතනින් click එකකින් TMDB එකෙන් auto fetch කරගන්න පුළුවන්.</p>
+      <button class="admin-btn" onclick="fixMissingCastCrew()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.5);color:#22c55e">🎭 Scan &amp; Fix Missing Cast/Director</button>
+      <div id="fixCastCrewStatus" style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6"></div>
+    </div>
+    <div class="admin-card">
+      <label class="admin-label">Site Name</label>
+      <input class="admin-input" id="settingSiteName" value="Cineflix">
+      <label class="admin-label">Footer Text</label>
+      <input class="admin-input" id="settingFooter" value="CINEMATIC UNIVERSE">
+      <label class="admin-label">Hero Slider Movie IDs (comma separated)</label>
+      <input class="admin-input" id="settingHeroIds" placeholder="id1,id2,id3">
+      <button class="admin-btn" onclick="saveSettings()">Save Settings</button>
+    </div>
+    <div class="admin-card">
+      <div class="admin-card-title" style="color:var(--red)">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+        Danger Zone
+      </div>
+      <button class="admin-btn" style="background:transparent;border:1px solid var(--red);color:var(--red);margin-bottom:8px" onclick="if(confirm('Clear ALL movies?'))clearAllMovies()">🗑 Clear All Movies</button>
+      <button class="admin-btn" style="background:rgba(245,197,24,0.1);border:1px solid rgba(245,197,24,0.5);color:var(--yellow);margin-bottom:8px" onclick="resetAllDownloads()">↺ Reset All Downloads Count</button>
+      <button class="admin-btn" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.5);color:#60a5fa" onclick="resetAllViews()">↺ Reset All Views Count</button>
+    </div>
+  </div>
+
+  <!-- REQUESTS TAB (Admin) -->
+  <div id="adminTabRequests" style="display:none">
+    <div class="admin-card">
+      <div class="admin-card-title">
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:var(--red);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Movie Requests (User Submissions)
+      </div>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.6">Users ගේ movie requests. Status change කරන්න "Mark as Added" click කරන්න.</p>
+      <div id="adminRequestList"><div style="color:var(--text3);font-size:13px;text-align:center;padding:20px">Loading...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Plyr not needed -->
+<script>
+const FIREBASE_API_KEY = "AIzaSyBkSdYjHaIaaB5OTpXcv0PArP4mmgo23Sk";
+const FIREBASE_DB_URL = "https://sutable-99848-default-rtdb.firebaseio.com";
+const FIREBASE_PROJECT_ID = "sutable-99848";
+
+// ===== AUTH STATE =====
+let _authToken = null;
+let _authUser = null;
+let _authListeners = [];
+
+const auth = {
+  currentUser: null,
+  onAuthStateChanged(cb){
+    _authListeners.push(cb);
+    cb(_authUser); // immediate call
+    return ()=>{_authListeners=_authListeners.filter(x=>x!==cb)};
+  },
+  async signInWithEmailAndPassword(email,password){
+    const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email,password,returnSecureToken:true})
+    });
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message);
+    _authToken = data.idToken;
+    _authUser = {email:data.email, uid:data.localId};
+    auth.currentUser = _authUser;
+    _authListeners.forEach(cb=>cb(_authUser));
+    return {user:_authUser};
+  },
+  async signOut(){
+    _authToken=null; _authUser=null; auth.currentUser=null;
+    _authListeners.forEach(cb=>cb(null));
+  }
+};
+
+// ===== REALTIME DB via REST =====
+// Simple wrapper mimicking firebase.database() SDK style
+const _listeners = {}; // path -> {intervalId, callbacks[]}
+
+function _rtdbUrl(path){ return `${FIREBASE_DB_URL}/${path}.json`; }
+
+async function _rtdbGet(path){
+  const url = _authToken ? `${_rtdbUrl(path)}?auth=${_authToken}` : _rtdbUrl(path);
+  const res = await fetch(url);
+  return res.json();
+}
+async function _rtdbSet(path, data){
+  const url = _authToken ? `${_rtdbUrl(path)}?auth=${_authToken}` : _rtdbUrl(path);
+  const res = await fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  return res.json();
+}
+async function _rtdbPush(path, data){
+  const url = _authToken ? `${_rtdbUrl(path)}?auth=${_authToken}` : _rtdbUrl(path);
+  const res = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  return res.json();
+}
+async function _rtdbRemove(path){
+  const url = _authToken ? `${_rtdbUrl(path)}?auth=${_authToken}` : _rtdbUrl(path);
+  await fetch(url,{method:'DELETE'});
+}
+
+function _makeRef(path){
+  return {
+    on(event, cb){
+      // Poll every 60s — only rebuild when data actually changes
+      let lastHash = null;
+      const poll = async ()=>{
+        const data = await _rtdbGet(path);
+        const hash = JSON.stringify(data);
+        if(hash === lastHash) return; // no change, skip callback
+        lastHash = hash;
+        const snap = _makeSnap(data);
+        cb(snap);
+      };
+      poll();
+      if(!_listeners[path]) _listeners[path]={intervalId:null,callbacks:[]};
+      _listeners[path].callbacks.push(cb);
+      if(!_listeners[path].intervalId){
+        _listeners[path].intervalId = setInterval(poll, 60000);
+      }
+    },
+    async once(event){
+      const data = await _rtdbGet(path);
+      return _makeSnap(data);
+    },
+    orderByChild(field){
+      const _p = path;
+      return {
+        limitToLast(n){
+          return {
+            async once(event){
+              const data = await _rtdbGet(_p);
+              return _makeSnap(data, field, n);
+            }
+          };
+        },
+        async once(event){
+          const data = await _rtdbGet(_p);
+          return _makeSnap(data, field, null);
+        }
+      };
+    },
+    async set(data){
+      await _rtdbSet(path, data);
+    },
+    push(){
+      // Return a thenable ref with a pre-generated key
+      const key = '-' + Math.random().toString(36).substr(2,20);
+      const childPath = path + '/' + key;
+      return {
+        key,
+        set: async (data)=>{ await _rtdbSet(childPath, data); },
+        then: undefined // will be set below
+      };
+    },
+    async remove(){ await _rtdbRemove(path); },
+    ref(subpath){ return _makeRef(subpath); }
+  };
+}
+
+function _makeSnap(data, sortField, limit){
+  // Mimics Firebase DataSnapshot
+  let entries = (data && typeof data==='object') ? Object.entries(data) : [];
+  // Sort by field if requested
+  if(sortField){
+    entries = entries.sort((a,b)=>{
+      const av = a[1]?.[sortField]||0;
+      const bv = b[1]?.[sortField]||0;
+      return av - bv;
+    });
+  }
+  // Apply limit (limitToLast = last N after sort)
+  if(limit) entries = entries.slice(-limit);
+  return {
+    val(){ return data; },
+    exists(){ return data !== null && data !== undefined; },
+    numChildren(){ return entries.length; },
+    forEach(cb){
+      entries.forEach(([key,val])=>{
+        cb({key, val:()=>val, forEach:(cb2)=>{
+          if(val && typeof val==='object') Object.entries(val).forEach(([k2,v2])=>cb2({key:k2,val:()=>v2}));
+        }});
+      });
+    }
+  };
+}
+
+// Push with .then() support (for saveMovie)
+const _origPush = _makeRef('').push;
+function _makePushRef(basePath){
+  const key = '-' + Date.now().toString(36) + Math.random().toString(36).substr(2,8);
+  const childPath = basePath + '/' + key;
+  let _setData = null;
+  const promise = {
+    key,
+    set(data){
+      _setData = data;
+      return _rtdbSet(childPath, data);
+    }
+  };
+  return promise;
+}
+
+// db object mimicking firebase.database()
+const db = {
+  ref(path){ 
+    const r = _makeRef(path);
+    // Override push to support .then()
+    r.push = ()=> {
+      const key = '-' + Date.now().toString(36) + Math.random().toString(36).substr(2,8);
+      const childPath = path + '/' + key;
+      return {
+        key,
+        set: async(data)=>{ await _rtdbSet(childPath, data); }
+      };
+    };
+    return r;
+  }
+};
+// ===== TMDB CONFIG =====
+const TMDB_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI2ZWJkMDRhMTVhNzY0YWVmYmJjNzEyMGY5YTFmN2ZjYyIsIm5iZiI6MTc3NDA1OTkzNi43MjMsInN1YiI6IjY5YmUwMWEwMDI2ZjU1MjkwZmE1ZGVlYyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.RcaHm0ztmGjBYFjJ5VFs6bnTtXrj95oK1dlPXj4cGdg';
+const TMDB_BASE = 'https://api.themoviedb.org/3';
+const TMDB_IMG = 'https://image.tmdb.org/t/p/';
+
+// ===== STATE =====
+let movies = [];
+let isAdmin = false;
+let editingMovieId = null;
+let downloadLinkCount = 0;
+let notifList = [];
+
+// ===== TOAST =====
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ===== FORMAT COUNT =====
+function formatCount(n){
+  n = n||0;
+  if(n>=1000000) return (n/1000000).toFixed(1)+'M';
+  if(n>=1000) return (n/1000).toFixed(1)+'K';
+  return String(n);
+}
+
+// ===== LOAD MOVIES (simplified for admin) =====
+let _moviesLoaded = false;
+function loadMovies(){
+  db.ref('movies').on('value',snap=>{
+    movies=[];
+    snap.forEach(child=>{
+      movies.push({id:child.key,...child.val()});
+    });
+    movies.reverse();
+    updateStats();
+    if(!_moviesLoaded){
+      _moviesLoaded = true;
+    }
+    if(isAdmin){
+      loadAdminMovies();
+    }
+  });
+}
+
+function updateStats(){
+  const sm = document.getElementById('statMovies');
+  if(sm) sm.textContent = movies.length;
+  db.ref('comments').once('value').then(snap=>{
+    let total=0;
+    snap.forEach(mv=>mv.forEach(()=>total++));
+    const sc = document.getElementById('statComments');
+    if(sc) sc.textContent = total;
+  }).catch(()=>{});
+  let totalViews = 0, totalDl = 0;
+  movies.forEach(m=>{ totalViews += (m.views||0); totalDl += (m.downloads_count||0); });
+  const sv = document.getElementById('statViews');
+  if(sv) sv.textContent = formatCount(totalViews);
+  const sd = document.getElementById('statDownloads');
+  if(sd) sd.textContent = formatCount(totalDl);
+  db.ref('analytics/totalVisitors').once('value').then(snap=>{
+    const sVis = document.getElementById('statVisitors');
+    if(sVis) sVis.textContent = formatCount(snap.val()||0);
+  }).catch(()=>{});
+}
+
+// ===== ANALYTICS CHART =====
+let _analyticsChartInstance = null;
+let _analyticsRangeDays = 7;
+function setAnalyticsRange(days, el){
+  _analyticsRangeDays = days;
+  document.querySelectorAll('.chart-range-btn').forEach(b=>b.classList.remove('active'));
+  if(el) el.classList.add('active');
+  loadAnalyticsChart(days);
+}
+function _dateKeysBack(days){
+  const keys = [];
+  for(let i = days - 1; i >= 0; i--){
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    keys.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));
+  }
+  return keys;
+}
+async function loadAnalyticsChart(days){
+  days = days || _analyticsRangeDays;
+  const canvas = document.getElementById('analyticsChart');
+  if(!canvas || typeof Chart === 'undefined') return;
+  try{
+    const [visSnap, viewSnap, dlSnap] = await Promise.all([
+      db.ref('analytics/visitorsDaily').once('value'),
+      db.ref('analytics/viewsDaily').once('value'),
+      db.ref('analytics/downloadsDaily').once('value')
+    ]);
+    const visData = visSnap.val() || {};
+    const viewData = viewSnap.val() || {};
+    const dlData = dlSnap.val() || {};
+    const keys = _dateKeysBack(days);
+    const labels = keys.map(k=>{
+      const [y,m,d] = k.split('-');
+      return `${d}/${m}`;
+    });
+    const visitors = keys.map(k=>visData[k]||0);
+    const views = keys.map(k=>viewData[k]||0);
+    const downloads = keys.map(k=>dlData[k]||0);
+
+    if(_analyticsChartInstance){ _analyticsChartInstance.destroy(); }
+    _analyticsChartInstance = new Chart(canvas.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label:'Visitors', data:visitors, borderColor:'#F5C518', backgroundColor:'rgba(245,197,24,0.12)', tension:0.35, fill:true, pointRadius:3 },
+          { label:'Views', data:views, borderColor:'#E8262A', backgroundColor:'rgba(232,38,42,0.12)', tension:0.35, fill:true, pointRadius:3 },
+          { label:'Downloads', data:downloads, borderColor:'#3B82F6', backgroundColor:'rgba(59,130,246,0.12)', tension:0.35, fill:true, pointRadius:3 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display:false } },
+        scales: {
+          x: { ticks:{ color:'#777777', font:{size:10} }, grid:{ color:'#1A1A1A' } },
+          y: { beginAtZero:true, ticks:{ color:'#777777', font:{size:10}, precision:0 }, grid:{ color:'#1A1A1A' } }
+        }
+      }
+    });
+  }catch(e){
+    console.error('Analytics chart error', e);
+  }
+}
+
+// ===== ADD NOTIFICATION (Firebase) =====
+function addNotif(msg, type='movie'){
+  try {
+    const notifRef = db.ref('notifications').push();
+    notifRef.set({ msg, type, time: Date.now() });
+  } catch(e){}
+}
+function switchAdminTab(tab, el){
+  document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  const tabAdd=document.getElementById('adminTabAdd');
+  const tabManage=document.getElementById('adminTabManage');
+  const tabAnalytics=document.getElementById('adminTabAnalytics');
+  const tabSettings=document.getElementById('adminTabSettings');
+  const tabRequests=document.getElementById('adminTabRequests');
+  if(tabAdd) tabAdd.style.display=tab==='add'?'block':'none';
+  if(tabManage) tabManage.style.display=tab==='manage'?'block':'none';
+  if(tabAnalytics) tabAnalytics.style.display=tab==='analytics'?'block':'none';
+  if(tabSettings) tabSettings.style.display=tab==='settings'?'block':'none';
+  if(tabRequests) tabRequests.style.display=tab==='requests'?'block':'none';
+  if(tab==='requests') loadAdminRequests();
+  if(tab==='manage') loadAdminMovies();
+  if(tab==='analytics') loadAnalyticsChart(_analyticsRangeDays);
+}
+
+// ===== TMDB SEARCH =====
+async function searchTMDB(){
+  const q=document.getElementById('tmdbSearch').value.trim();
+  if(!q) return;
+  const resultsEl=document.getElementById('tmdbResults');
+  resultsEl.innerHTML='<div style="color:var(--text3);font-size:12px;padding:10px">Searching...</div>';
+  try{
+    const r=await fetch(`${TMDB_BASE}/search/multi?query=${encodeURIComponent(q)}&language=en-US`,{
+      headers:{Authorization:`Bearer ${TMDB_TOKEN}`}
+    });
+    const data=await r.json();
+    const results=(data.results||[]).filter(x=>x.media_type==='movie'||x.media_type==='tv').slice(0,10);
+    if(results.length===0){resultsEl.innerHTML='<div style="color:var(--text3);font-size:12px;padding:10px">No results found.</div>';return;}
+    resultsEl.innerHTML=results.map(m=>`
+      <div class="tmdb-search-result" onclick="fillMovieForm('${m.id}','${m.media_type}')">
+        <img src="${m.poster_path?TMDB_IMG+'w92'+m.poster_path:''}" onerror="this.src=''" alt="">
+        <div>
+          <div class="tmdb-result-title">${m.title||m.name}</div>
+          <div class="tmdb-result-year">${(m.release_date||m.first_air_date||'').substring(0,4)} • ${m.media_type.toUpperCase()}</div>
+        </div>
+      </div>
+    `).join('');
+  }catch(e){resultsEl.innerHTML='<div style="color:var(--red);font-size:12px;padding:10px">Error fetching results.</div>';}
+}
+
+async function fillMovieForm(tmdbId, type){
+  document.getElementById('tmdbResults').innerHTML='<div style="color:var(--text3);font-size:12px;padding:10px">Loading details...</div>';
+  try{
+    const r=await fetch(`${TMDB_BASE}/${type}/${tmdbId}?language=en-US&append_to_response=credits,videos,images&include_image_language=en,null`,{
+      headers:{Authorization:`Bearer ${TMDB_TOKEN}`}
+    });
+    const m=await r.json();
+    document.getElementById('addTitle').value=m.title||m.name||'';
+    document.getElementById('addYear').value=(m.release_date||m.first_air_date||'').substring(0,4);
+    document.getElementById('addGenre').value=(m.genres||[]).map(g=>g.name).join(', ');
+    document.getElementById('addRating').value=m.vote_average?m.vote_average.toFixed(1):'';
+    document.getElementById('addDesc').value=m.overview||'';
+    document.getElementById('addPoster').value=m.poster_path?TMDB_IMG+'w342'+m.poster_path:'';
+    document.getElementById('addBackdrop').value=m.backdrop_path?TMDB_IMG+'w780'+m.backdrop_path:'';
+    document.getElementById('addTmdbId').value=tmdbId;
+    document.getElementById('addType').value=type;
+    toggleTVFields();
+    if(m.runtime) document.getElementById('addRuntime').value=`${Math.floor(m.runtime/60)}h ${m.runtime%60}m`;
+
+    // ===== Director (from credits.crew) =====
+    const crew = (m.credits && m.credits.crew) || [];
+    const directors = crew.filter(c=>c.job==='Director').map(c=>c.name);
+    document.getElementById('addDirector').value = directors.join(', ');
+
+    // ===== Cast (top billed, from credits.cast) =====
+    const castList = (m.credits && m.credits.cast) || [];
+    document.getElementById('addCast').value = castList.slice(0,8).map(c=>c.name).join(', ');
+
+    // ===== Country (movies: production_countries, TV: origin_country codes) =====
+    let countryStr = '';
+    if(m.production_countries && m.production_countries.length){
+      countryStr = m.production_countries.map(c=>c.name).join(', ');
+    } else if(m.origin_country && m.origin_country.length){
+      countryStr = m.origin_country.join(', ');
+    }
+    document.getElementById('addCountry').value = countryStr;
+
+    // ===== Trailer (from videos.results, prefer official YouTube trailer) =====
+    const vids = (m.videos && m.videos.results) || [];
+    const trailer = vids.find(v=>v.site==='YouTube' && v.type==='Trailer' && v.official)
+      || vids.find(v=>v.site==='YouTube' && v.type==='Trailer')
+      || vids.find(v=>v.site==='YouTube');
+    document.getElementById('addTrailer').value = trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : '';
+
+    // ===== Screenshots (from images.backdrops, up to 6) =====
+    const backdrops = (m.images && m.images.backdrops) || [];
+    document.getElementById('addScreenshots').value = backdrops.slice(0,6).map(b=>TMDB_IMG+'w780'+b.file_path).join('\n');
+
+    document.getElementById('addMovieForm').style.display='block';
+    document.getElementById('tmdbResults').innerHTML='<div style="color:#22c55e;font-size:12px;padding:10px">✓ Details loaded! Fill remaining fields below.</div>';
+    document.getElementById('addMovieForm').scrollIntoView({behavior:'smooth'});
+  }catch(e){document.getElementById('tmdbResults').innerHTML='<div style="color:var(--red);font-size:12px;padding:10px">Error loading details.</div>';}
+}
+
+// ===== TV SERIES SEASONS/EPISODES =====
+let seasonCount = 0;
+function toggleTVFields(){
+  const type = document.getElementById('addType').value;
+  document.getElementById('tvSeriesSection').style.display = type==='tv' ? 'block' : 'none';
+}
+function addSeason(){
+  seasonCount++;
+  const sn = seasonCount;
+  const el = document.getElementById('seasonsAdmin');
+  const div = document.createElement('div');
+  div.className = 'season-block';
+  div.dataset.season = sn;
+  div.style.cssText = 'background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:10px';
+  div.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:700;color:var(--red)">Season ${sn}</div>
+      <span style="color:var(--red);cursor:pointer;font-size:12px" onclick="this.closest('.season-block').remove()">✕ Remove</span>
+    </div>
+    <input class="admin-input season-name-input" placeholder="Season Name (e.g. Season 1)" style="margin-bottom:8px">
+    <div class="episodes-container"></div>
+    <button class="admin-btn secondary" onclick="addEpisode(this)" style="margin-top:4px;font-size:12px">+ Add Episode</button>
+  `;
+  el.appendChild(div);
+}
+function addEpisode(btn){
+  const seasonBlock = btn.closest('.season-block');
+  const container = seasonBlock.querySelector('.episodes-container');
+  const epNum = container.querySelectorAll('.episode-block').length + 1;
+  const div = document.createElement('div');
+  div.className = 'episode-block';
+  div.style.cssText = 'background:var(--bg4);border-radius:6px;padding:10px;margin-bottom:8px;position:relative';
+  div.innerHTML = `
+    <span style="position:absolute;top:6px;right:8px;cursor:pointer;color:var(--text3);font-size:11px" onclick="this.closest('.episode-block').remove()">✕</span>
+    <div style="display:grid;grid-template-columns:80px 1fr;gap:8px;margin-bottom:6px">
+      <input class="admin-input ep-num" placeholder="Ep #" value="${epNum}" style="margin-bottom:0">
+      <input class="admin-input ep-title" placeholder="Episode Title" style="margin-bottom:0">
+    </div>
+    <input class="admin-input ep-stream" placeholder="🎬 Stream URL (mp4 - watch)" style="margin-bottom:6px">
+    <input class="admin-input ep-dl" placeholder="☁️ Usersdrive Download URL" style="margin-bottom:6px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px">
+      <input class="admin-input ep-pd480" placeholder="⚡ Pixeldrain 480p" style="margin-bottom:0;font-size:11px;border-color:rgba(108,108,255,0.3)">
+      <input class="admin-input ep-pd720" placeholder="⚡ Pixeldrain 720p" style="margin-bottom:0;font-size:11px;border-color:rgba(108,108,255,0.3)">
+      <input class="admin-input ep-pd1080" placeholder="⚡ Pixeldrain 1080p" style="margin-bottom:0;font-size:11px;border-color:rgba(108,108,255,0.3)">
+    </div>
+    <input class="admin-input ep-tg" placeholder="📨 Telegram Link (t.me/...)" style="margin-bottom:6px;border-color:rgba(34,158,217,0.3)">
+    <input class="admin-input ep-srv1" placeholder="🖥️ DL Server 1 URL" style="margin-bottom:6px;border-color:rgba(245,166,35,0.3)">
+    <input class="admin-input ep-srv2" placeholder="🖥️ DL Server 2 URL" style="margin-bottom:6px;border-color:rgba(230,126,34,0.3)">
+    <input class="admin-input ep-sub" placeholder="🇸🇮 Sinhala Subtitle URL (.srt / .zip)" style="margin-bottom:0;border-color:rgba(245,197,24,0.35)">
+  `;
+  container.appendChild(div);
+}
+function collectSeasons(){
+  const seasons = [];
+  document.querySelectorAll('.season-block').forEach((sdiv,si)=>{
+    const eps = [];
+    sdiv.querySelectorAll('.episode-block').forEach(ediv=>{
+      const num = ediv.querySelector('.ep-num')?.value || '';
+      const title = ediv.querySelector('.ep-title')?.value || '';
+      const url = ediv.querySelector('.ep-stream')?.value || '';
+      const dlUrl = ediv.querySelector('.ep-dl')?.value || '';
+      const subUrl = ediv.querySelector('.ep-sub')?.value || '';
+      const pd480 = ediv.querySelector('.ep-pd480')?.value || '';
+      const pd720 = ediv.querySelector('.ep-pd720')?.value || '';
+      const pd1080 = ediv.querySelector('.ep-pd1080')?.value || '';
+      const tgLink = ediv.querySelector('.ep-tg')?.value || '';
+      const srv1 = ediv.querySelector('.ep-srv1')?.value || '';
+      const srv2 = ediv.querySelector('.ep-srv2')?.value || '';
+      if(title || url || dlUrl) eps.push({ep:num, title, url, dlUrl, subUrl, pd480, pd720, pd1080, tgLink, srv1, srv2});
+    });
+    const name = sdiv.querySelector('.season-name-input')?.value || `Season ${si+1}`;
+    if(eps.length > 0) seasons.push({season:si+1, name, episodes:eps});
+  });
+  return seasons;
+}
+
+// ===== DOWNLOAD LINKS =====
+function addDownloadLink(){
+  const existing = document.querySelectorAll('[id^="dlLink"]').length;
+  if(existing >= 3){
+    showToast('⚠️ Maximum 3 download links add කරන්න පුළුවන්!');
+    return;
+  }
+  downloadLinkCount++;
+  const el=document.getElementById('downloadLinksAdmin');
+  const div=document.createElement('div');
+  div.style.cssText='background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:8px;position:relative';
+  div.id=`dlLink${downloadLinkCount}`;
+  div.innerHTML=`
+    <div style="position:absolute;top:8px;right:8px;cursor:pointer;color:var(--red);font-size:12px" onclick="this.parentElement.remove();updateDlLinkBtn()">✕</div>
+    <div class="row2">
+      <div>
+        <label class="admin-label">Quality</label>
+        <select class="admin-select" id="dlQ${downloadLinkCount}"><option>HD</option><option>FHD</option><option>4K</option><option>WEB</option><option>BD</option></select>
+      </div>
+      <div>
+        <label class="admin-label">Resolution</label>
+        <input class="admin-input" id="dlR${downloadLinkCount}" placeholder="720p" style="margin-bottom:0">
+      </div>
+    </div>
+    <label class="admin-label" style="margin-top:8px">Size</label>
+    <input class="admin-input" id="dlS${downloadLinkCount}" placeholder="1.2 GB">
+    <label class="admin-label">Download URL</label>
+    <input class="admin-input" id="dlU${downloadLinkCount}" placeholder="https://..." style="margin-bottom:6px">
+    <label class="admin-label" style="color:#6c6cff">⚡ Pixeldrain 480p URL (optional)</label>
+    <input class="admin-input" id="dlPd480_${downloadLinkCount}" placeholder="https://pixeldrain.com/..." style="margin-bottom:6px;border-color:rgba(108,108,255,0.3)">
+    <label class="admin-label" style="color:#6c6cff">⚡ Pixeldrain 720p URL (optional)</label>
+    <input class="admin-input" id="dlPd720_${downloadLinkCount}" placeholder="https://pixeldrain.com/..." style="margin-bottom:6px;border-color:rgba(108,108,255,0.3)">
+    <label class="admin-label" style="color:#6c6cff">⚡ Pixeldrain 1080p URL (optional)</label>
+    <input class="admin-input" id="dlPd1080_${downloadLinkCount}" placeholder="https://pixeldrain.com/..." style="margin-bottom:6px;border-color:rgba(108,108,255,0.3)">
+    <label class="admin-label" style="color:#229ED9">📨 Telegram Download Link (optional)</label>
+    <input class="admin-input" id="dlTg_${downloadLinkCount}" placeholder="https://t.me/... (Telegram හරහා දෙන link)" style="margin-bottom:6px;border-color:rgba(34,158,217,0.3)">
+    <label class="admin-label" style="color:#f5a623">🖥️ DL Server 1 URL (optional)</label>
+    <input class="admin-input" id="dlSrv1_${downloadLinkCount}" placeholder="https://server1.example.com/..." style="margin-bottom:6px;border-color:rgba(245,166,35,0.3)">
+    <label class="admin-label" style="color:#e67e22">🖥️ DL Server 2 URL (optional)</label>
+    <input class="admin-input" id="dlSrv2_${downloadLinkCount}" placeholder="https://server2.example.com/..." style="margin-bottom:0;border-color:rgba(230,126,34,0.3)">
+  `;
+  el.appendChild(div);
+  updateDlLinkBtn();
+}
+
+function updateDlLinkBtn(){
+  const btn = document.getElementById('addDlLinkBtn');
+  if(!btn) return;
+  const count = document.querySelectorAll('[id^="dlLink"]').length;
+  if(count >= 3){
+    btn.style.opacity = '0.4';
+    btn.style.cursor = 'default';
+    btn.innerHTML = '+ Add Download Link <span style="font-size:10px;opacity:0.8">⚠️ Max 3 reached</span>';
+  } else {
+    btn.style.opacity = '';
+    btn.style.cursor = '';
+    btn.innerHTML = `+ Add Download Link <span style="font-size:10px;opacity:0.6">(max 3 · now ${count})</span>`;
+  }
+}
+
+async function saveMovie(){
+  const user=auth.currentUser;
+  if(!user){showToast('Please login first!');return;}
+  const title=document.getElementById('addTitle').value.trim();
+  if(!title){showToast('Title is required!');return;}
+  
+  const downloads=[];
+  document.querySelectorAll('[id^="dlLink"]').forEach(div=>{
+    const n=div.id.replace('dlLink','');
+    downloads.push({
+      quality:document.getElementById(`dlQ${n}`)?.value||'HD',
+      res:document.getElementById(`dlR${n}`)?.value||'720p',
+      size:document.getElementById(`dlS${n}`)?.value||'',
+      url:document.getElementById(`dlU${n}`)?.value||'#',
+      pd480:document.getElementById(`dlPd480_${n}`)?.value||'',
+      pd720:document.getElementById(`dlPd720_${n}`)?.value||'',
+      pd1080:document.getElementById(`dlPd1080_${n}`)?.value||'',
+      tgLink:document.getElementById(`dlTg_${n}`)?.value||'',
+      srv1:document.getElementById(`dlSrv1_${n}`)?.value||'',
+      srv2:document.getElementById(`dlSrv2_${n}`)?.value||''
+    });
+  });
+
+  const movie={
+    title,
+    year:document.getElementById('addYear').value||'',
+    genre:document.getElementById('addGenre').value||'',
+    runtime:document.getElementById('addRuntime').value||'',
+    rating:document.getElementById('addRating').value||'',
+    description:document.getElementById('addDesc').value||'',
+    poster:document.getElementById('addPoster').value||'',
+    backdrop:document.getElementById('addBackdrop').value||'',
+    director:document.getElementById('addDirector')?.value?.trim()||'',
+    cast:document.getElementById('addCast')?.value?.trim()||'',
+    country:document.getElementById('addCountry')?.value?.trim()||'',
+    trailer:document.getElementById('addTrailer')?.value?.trim()||'',
+    screenshots:(document.getElementById('addScreenshots')?.value||'').split('\n').map(s=>s.trim()).filter(Boolean),
+    quality:document.getElementById('addQuality').value||'WEB-RIP',
+    type:document.getElementById('addType').value||'movie',
+    streamUrl:document.getElementById('addStreamUrl').value||'',
+    subBy:document.getElementById('addSubBy').value||'Piratelk.com',
+    subUrl:document.getElementById('addSubUrl')?.value||'',
+    adult:document.getElementById('addAdult').value==='true',
+    tmdbId:document.getElementById('addTmdbId').value||'',
+    collection:document.getElementById('addCollection')?.value?.trim()||'',
+    collectionOrder:parseInt(document.getElementById('addCollectionOrder')?.value||'0')||0,
+    adminNote:document.getElementById('addAdminNote')?.value?.trim()||'',
+    downloads,
+    seasons: collectSeasons(),
+    isVip: document.getElementById('addVip').checked,
+    showSubNotice: document.getElementById('addShowSubNotice').checked,
+    addedAt: Date.now()
+  };
+
+  try {
+    if(editingMovieId){
+      // Preserve existing stats (views & downloads_count) when editing
+      const existingMovie = movies.find(x => x.id === editingMovieId);
+      if(existingMovie){
+        if(existingMovie.views) movie.views = existingMovie.views;
+        if(existingMovie.downloads_count) movie.downloads_count = existingMovie.downloads_count;
+      }
+      await db.ref(`movies/${editingMovieId}`).set(movie);
+    } else {
+      const ref = db.ref('movies').push();
+      await ref.set(movie);
+    }
+    showToast(editingMovieId?'Movie updated!':'Movie added!');
+    const notifMsg = editingMovieId ? `"${title}" updated` : `New movie added: "${title}"`;
+    const unread = parseInt(localStorage.getItem('cineflix_notifs_unread')||'0');
+    localStorage.setItem('cineflix_notifs_unread', String(unread+1));
+    addNotif(notifMsg, 'movie');
+    resetAddForm();
+    editingMovieId=null;
+    switchAdminTab('manage',document.querySelectorAll('.admin-tab')[1]);
+  } catch(e){ showToast('Error: '+e.message); }
+}
+
+function resetAddForm(){
+  ['addTitle','addYear','addGenre','addRuntime','addRating','addDesc','addPoster','addBackdrop','addDirector','addCast','addCountry','addTrailer','addScreenshots','addStreamUrl','addSubBy','addSubUrl','addTmdbId','tmdbSearch','addCollection','addCollectionOrder'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.value='';
+  });
+  document.getElementById('downloadLinksAdmin').innerHTML='';
+  document.getElementById('addMovieForm').style.display='none';
+  document.getElementById('tmdbResults').innerHTML='';
+  document.getElementById('seasonsAdmin').innerHTML='';
+  downloadLinkCount=0;
+  seasonCount=0;
+  editingMovieId=null;
+}
+
+// ===== ADMIN MOVIE LIST =====
+function loadAdminMovies(){
+  const el=document.getElementById('adminMovieList');
+  if(!el) return;
+  if(movies.length===0){el.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px">No movies yet. Add some!</div>';return;}
+  el.innerHTML=movies.map(m=>`
+    <div class="admin-movie-item">
+      <img class="admin-movie-poster" src="${m.poster||''}" onerror="this.style.background='var(--bg4)';this.src=''" alt="">
+      <div class="admin-movie-info">
+        <div class="admin-movie-title">${m.title||'(No Title)'}</div>
+        <div class="admin-movie-meta">${m.year||''} • ${m.type||'movie'} • ${m.quality||''} <span style="color:var(--text3)">| 👁 ${formatCount(m.views||0)} · ⬇ ${formatCount(m.downloads_count||0)}</span></div>
+      </div>
+      <div class="admin-movie-actions">
+        <div class="admin-movie-btn edit" onclick="editMovie('${m.id}')" title="Edit">
+          <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        </div>
+        <div class="admin-movie-btn" onclick="resetMovieStats('${m.id}','${(m.title||'').replace(/'/g,"\\'")}')" title="Reset Stats" style="background:rgba(245,197,24,0.12);border:1px solid rgba(245,197,24,0.3);color:var(--yellow);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px">
+          ↺
+        </div>
+        <div class="admin-movie-btn del" onclick="deleteMovie('${m.id}','${(m.title||'').replace(/'/g,"\\'")}')" title="Delete">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+async function fixMissingTrailers(){
+  const statusEl = document.getElementById('fixTrailersStatus');
+  if(!statusEl) return;
+  statusEl.textContent = 'Loading movie list...';
+
+  const candidates = movies.filter(m => (!m.trailer || !m.trailer.trim()) && m.tmdbId && String(m.tmdbId).trim() !== '');
+  if(candidates.length === 0){
+    statusEl.textContent = '✅ All movies with a saved TMDB ID already have trailers. (Movies added without TMDB import have no ID to look up — add their trailer manually via Edit.)';
+    return;
+  }
+
+  let found = 0, failed = 0;
+  for(let i=0;i<candidates.length;i++){
+    const m = candidates[i];
+    statusEl.textContent = `Checking ${i+1}/${candidates.length}: ${(m.title||'').substring(0,40)}...`;
+    try{
+      const type = (m.type==='tv') ? 'tv' : 'movie';
+      const r = await fetch(`${TMDB_BASE}/${type}/${m.tmdbId}?language=en-US&append_to_response=videos`, {
+        headers:{ Authorization:`Bearer ${TMDB_TOKEN}` }
+      });
+      const data = await r.json();
+      const vids = (data.videos && data.videos.results) || [];
+      const trailer = vids.find(v=>v.site==='YouTube' && v.type==='Trailer' && v.official)
+        || vids.find(v=>v.site==='YouTube' && v.type==='Trailer')
+        || vids.find(v=>v.site==='YouTube');
+      if(trailer){
+        const url = `https://www.youtube.com/watch?v=${trailer.key}`;
+        await db.ref(`movies/${m.id}/trailer`).set(url);
+        m.trailer = url; // keep local cache in sync
+        found++;
+      } else {
+        failed++;
+      }
+    }catch(e){
+      failed++;
+    }
+    // small delay between calls to stay gentle on TMDB's API
+    await new Promise(res=>setTimeout(res, 250));
+  }
+  statusEl.innerHTML = `✅ Done! Saved <b style="color:#22c55e">${found}</b> trailer${found===1?'':'s'}.` +
+    (failed>0 ? `<br>⚠️ ${failed} movie${failed===1?'':'s'} had no trailer available on TMDB.` : '');
+  if(typeof updateStats === 'function') updateStats();
+}
+
+async function fixMissingCastCrew(){
+  const statusEl = document.getElementById('fixCastCrewStatus');
+  if(!statusEl) return;
+  statusEl.textContent = 'Loading movie list...';
+
+  // Only touch movies that have a saved TMDB ID AND are missing at least
+  // one of cast / director / year.
+  const candidates = movies.filter(m =>
+    m.tmdbId && String(m.tmdbId).trim() !== '' &&
+    ((!m.cast || !m.cast.trim()) || (!m.director || !m.director.trim()) || (!m.year || String(m.year).trim()===''))
+  );
+  if(candidates.length === 0){
+    statusEl.textContent = '✅ All movies with a saved TMDB ID already have Cast, Director & Year. (Movies added without TMDB import have no ID to look up — fill them manually via Edit.)';
+    return;
+  }
+
+  let updated = 0, failed = 0;
+  for(let i=0;i<candidates.length;i++){
+    const m = candidates[i];
+    statusEl.textContent = `Checking ${i+1}/${candidates.length}: ${(m.title||'').substring(0,40)}...`;
+    try{
+      const type = (m.type==='tv') ? 'tv' : 'movie';
+      const r = await fetch(`${TMDB_BASE}/${type}/${m.tmdbId}?language=en-US&append_to_response=credits`, {
+        headers:{ Authorization:`Bearer ${TMDB_TOKEN}` }
+      });
+      const data = await r.json();
+      const updates = {};
+
+      if(!m.director || !m.director.trim()){
+        const crew = (data.credits && data.credits.crew) || [];
+        const directors = crew.filter(c=>c.job==='Director').map(c=>c.name);
+        if(directors.length){ updates.director = directors.join(', '); }
+      }
+      if(!m.cast || !m.cast.trim()){
+        const castList = (data.credits && data.credits.cast) || [];
+        if(castList.length){ updates.cast = castList.slice(0,8).map(c=>c.name).join(', '); }
+      }
+      if(!m.year || String(m.year).trim()===''){
+        const dateStr = data.release_date || data.first_air_date || '';
+        const yr = dateStr.substring(0,4);
+        if(yr){ updates.year = yr; }
+      }
+
+      if(Object.keys(updates).length){
+        await db.ref(`movies/${m.id}`).update(updates);
+        Object.assign(m, updates); // keep local cache in sync
+        updated++;
+      } else {
+        failed++;
+      }
+    }catch(e){
+      failed++;
+    }
+    // small delay between calls to stay gentle on TMDB's API
+    await new Promise(res=>setTimeout(res, 250));
+  }
+  statusEl.innerHTML = `✅ Done! Updated <b style="color:#22c55e">${updated}</b> movie${updated===1?'':'s'}.` +
+    (failed>0 ? `<br>⚠️ ${failed} movie${failed===1?'':'s'} had no extra info available on TMDB.` : '');
+  if(typeof updateStats === 'function') updateStats();
+}
+
+function deleteMovie(id,title){
+  if(!confirm(`Delete "${title}"?`)) return;
+  db.ref(`movies/${id}`).remove().then(()=>showToast('Movie deleted!'));
+}
+function editMovie(id){
+  const m=movies.find(x=>x.id===id);
+  if(!m) return;
+  editingMovieId=id;
+  switchAdminTab('add',document.querySelectorAll('.admin-tab')[0]);
+  document.getElementById('addTitle').value=m.title||'';
+  document.getElementById('addYear').value=m.year||'';
+  document.getElementById('addGenre').value=m.genre||'';
+  document.getElementById('addRuntime').value=m.runtime||'';
+  document.getElementById('addRating').value=m.rating||'';
+  document.getElementById('addDesc').value=m.description||m.desc||'';
+  document.getElementById('addPoster').value=m.poster||'';
+  document.getElementById('addBackdrop').value=m.backdrop||'';
+  document.getElementById('addDirector').value=m.director||'';
+  document.getElementById('addCast').value=m.cast||'';
+  document.getElementById('addCountry').value=m.country||'';
+  document.getElementById('addTrailer').value=m.trailer||'';
+  document.getElementById('addScreenshots').value=(m.screenshots||[]).join('\n');
+  document.getElementById('addQuality').value=m.quality||'WEB-RIP';
+  document.getElementById('addType').value=m.type||'movie';
+  document.getElementById('addVip').checked=m.isVip||false;
+  const subNoticeChk = document.getElementById('addShowSubNotice');
+  const subNoticeSlider = document.getElementById('addShowSubNoticeSlider');
+  if(subNoticeChk) subNoticeChk.checked = m.showSubNotice||false;
+  if(subNoticeSlider) subNoticeSlider.style.background = m.showSubNotice ? '#f5c518' : '#333';
+  toggleTVFields();
+  // Load existing seasons if TV
+  if((m.type==='tv') && m.seasons && m.seasons.length>0){
+    document.getElementById('seasonsAdmin').innerHTML='';
+    seasonCount=0;
+    m.seasons.forEach(s=>{
+      addSeason();
+      // Get the last added season block
+      const seasonBlocks = document.querySelectorAll('.season-block');
+      const seasonBlock = seasonBlocks[seasonBlocks.length-1];
+      const nameEl = seasonBlock.querySelector('.season-name-input');
+      if(nameEl) nameEl.value = s.name||'';
+      // Add episodes
+      (s.episodes||[]).forEach(ep=>{
+        const addEpBtn = seasonBlock.querySelector('.admin-btn.secondary');
+        addEpisode(addEpBtn);
+        const epBlocks = seasonBlock.querySelectorAll('.episode-block');
+        const epBlock = epBlocks[epBlocks.length-1];
+        const numEl = epBlock.querySelector('.ep-num');
+        const titleEl = epBlock.querySelector('.ep-title');
+        const urlEl = epBlock.querySelector('.ep-stream');
+        const dlUrlEl = epBlock.querySelector('.ep-dl');
+        const subUrlEl = epBlock.querySelector('.ep-sub');
+        if(numEl) numEl.value = ep.ep||'';
+        if(titleEl) titleEl.value = ep.title||'';
+        if(urlEl) urlEl.value = ep.url||'';
+        if(dlUrlEl) dlUrlEl.value = ep.dlUrl||'';
+        if(subUrlEl) subUrlEl.value = ep.subUrl||'';
+        const pd480El = epBlock.querySelector('.ep-pd480');
+        const pd720El = epBlock.querySelector('.ep-pd720');
+        const pd1080El = epBlock.querySelector('.ep-pd1080');
+        const tgEl = epBlock.querySelector('.ep-tg');
+        const srv1El = epBlock.querySelector('.ep-srv1');
+        if(pd480El) pd480El.value = ep.pd480||'';
+        if(pd720El) pd720El.value = ep.pd720||'';
+        if(pd1080El) pd1080El.value = ep.pd1080||'';
+        if(tgEl) tgEl.value = ep.tgLink||'';
+        if(srv1El) srv1El.value = ep.srv1||'';
+        const srv2El = epBlock.querySelector('.ep-srv2');
+        if(srv2El) srv2El.value = ep.srv2||'';
+      });
+    });
+  }
+  document.getElementById('addStreamUrl').value=m.streamUrl||'';
+  document.getElementById('addSubBy').value=m.subBy||'';
+  if(document.getElementById('addSubUrl')) document.getElementById('addSubUrl').value=m.subUrl||'';
+  document.getElementById('addAdult').value=m.adult?'true':'false';
+  document.querySelectorAll('input[name="adultToggle"]').forEach(r=>{ r.checked=(r.value===(m.adult?'true':'false')); });
+  document.getElementById('addTmdbId').value=m.tmdbId||'';
+  if(document.getElementById('addAdminNote')) document.getElementById('addAdminNote').value=m.adminNote||'';
+  if(document.getElementById('addCollection')) document.getElementById('addCollection').value=m.collection||'';
+  if(document.getElementById('addCollectionOrder')) document.getElementById('addCollectionOrder').value=m.collectionOrder||'';
+  document.getElementById('downloadLinksAdmin').innerHTML='';
+  downloadLinkCount=0;
+  (m.downloads||[]).forEach(d=>{
+    addDownloadLink();
+    document.getElementById(`dlQ${downloadLinkCount}`).value=d.quality||'HD';
+    document.getElementById(`dlR${downloadLinkCount}`).value=d.res||'720p';
+    document.getElementById(`dlS${downloadLinkCount}`).value=d.size||'';
+    document.getElementById(`dlU${downloadLinkCount}`).value=d.url||'';
+    if(document.getElementById(`dlPd480_${downloadLinkCount}`)) document.getElementById(`dlPd480_${downloadLinkCount}`).value=d.pd480||'';
+    if(document.getElementById(`dlPd720_${downloadLinkCount}`)) document.getElementById(`dlPd720_${downloadLinkCount}`).value=d.pd720||'';
+    if(document.getElementById(`dlPd1080_${downloadLinkCount}`)) document.getElementById(`dlPd1080_${downloadLinkCount}`).value=d.pd1080||'';
+    if(document.getElementById(`dlTg_${downloadLinkCount}`)) document.getElementById(`dlTg_${downloadLinkCount}`).value=d.tgLink||'';
+    if(document.getElementById(`dlSrv1_${downloadLinkCount}`)) document.getElementById(`dlSrv1_${downloadLinkCount}`).value=d.srv1||'';
+    if(document.getElementById(`dlSrv2_${downloadLinkCount}`)) document.getElementById(`dlSrv2_${downloadLinkCount}`).value=d.srv2||'';
+  });
+  document.getElementById('addMovieForm').style.display='block';
+  document.getElementById('addMovieForm').scrollIntoView({behavior:'smooth'});
+}
+
+// ===== SET DETAILS (ADMIN NOTE per movie) =====
+let _setDetailsMovieId = null;
+function searchSetDetails(val){
+  const res = document.getElementById('setDetailsResults');
+  if(!res) return;
+  const form = document.getElementById('setDetailsForm');
+  if(!val.trim()){ res.innerHTML=''; if(form) form.style.display='none'; return; }
+  const filtered = movies.filter(m=>(m.title||'').toLowerCase().includes(val.toLowerCase())).slice(0,8);
+  if(!filtered.length){ res.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0">No results found.</div>'; return; }
+  res.innerHTML = filtered.map(m=>`
+    <div onclick="selectSetDetailsMovie('${m.id}')" style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg3);border-radius:8px;margin-bottom:6px;cursor:pointer;border:1px solid var(--bg4);transition:0.2s" onmouseover="this.style.borderColor='rgba(140,80,220,0.6)'" onmouseout="this.style.borderColor='var(--bg4)'">
+      <img src="${m.poster||''}" style="width:30px;height:44px;border-radius:4px;object-fit:cover;background:var(--bg4)" onerror="this.src=''">
+      <div>
+        <div style="font-size:13px;font-weight:700">${m.title||'(No Title)'}</div>
+        <div style="font-size:10px;color:var(--text3)">${m.year||''} · ${(m.type||'movie').toUpperCase()}</div>
+      </div>
+      ${m.adminNote?'<span style="margin-left:auto;font-size:9px;background:rgba(120,60,200,0.2);color:#b57bee;padding:2px 7px;border-radius:10px;font-weight:700">NOTE ✓</span>':''}
+    </div>
+  `).join('');
+}
+function selectSetDetailsMovie(id){
+  const m = movies.find(x=>x.id===id);
+  if(!m) return;
+  _setDetailsMovieId = id;
+  document.getElementById('setDetailsResults').innerHTML='';
+  document.getElementById('setDetailsSearch').value='';
+  document.getElementById('setDetailsPoster').src = m.poster||'';
+  document.getElementById('setDetailsTitle').textContent = m.title||'(No Title)';
+  document.getElementById('setDetailsMeta').textContent = `${m.year||''} · ${(m.type||'movie').toUpperCase()}`;
+  document.getElementById('setDetailsNote').value = m.adminNote||'';
+  document.getElementById('setDetailsForm').style.display='block';
+}
+async function saveSetDetails(){
+  if(!_setDetailsMovieId){ showToast('Movie select කරන්න!'); return; }
+  const note = document.getElementById('setDetailsNote').value.trim();
+  await db.ref(`movies/${_setDetailsMovieId}/adminNote`).set(note);
+  // Update local movies array
+  const idx = movies.findIndex(x=>x.id===_setDetailsMovieId);
+  if(idx>=0) movies[idx].adminNote = note;
+  showToast('✓ Admin note saved!');
+}
+async function clearSetDetails(){
+  if(!_setDetailsMovieId) return;
+  if(!confirm('Note clear කරන්නද?')) return;
+  await db.ref(`movies/${_setDetailsMovieId}/adminNote`).set('');
+  const idx = movies.findIndex(x=>x.id===_setDetailsMovieId);
+  if(idx>=0) movies[idx].adminNote = '';
+  document.getElementById('setDetailsNote').value='';
+  showToast('Note cleared.');
+}
+
+// ===== SETTINGS =====
+function saveSettings(){
+  db.ref('settings').set({
+    siteName:document.getElementById('settingSiteName').value,
+    footer:document.getElementById('settingFooter').value,
+    heroIds:document.getElementById('settingHeroIds').value
+  }).then(()=>showToast('Settings saved!'));
+}
+function clearAllMovies(){
+  db.ref('movies').remove().then(()=>showToast('All movies cleared!'));
+}
+
+// ===== RESET STATS (per movie) =====
+async function resetMovieStats(id, title){
+  const choice = confirm('"'+title+'"\n\nViews + Downloads reset කරන්නද?');
+  if(!choice) return;
+  try {
+    await db.ref('movies/'+id+'/views').set(0);
+    await db.ref('movies/'+id+'/downloads_count').set(0);
+    const idx = movies.findIndex(x=>x.id===id);
+    if(idx>=0){ movies[idx].views=0; movies[idx].downloads_count=0; }
+    showToast('✓ "'+title+'" stats reset!');
+    loadAdminMovies();
+    updateStats();
+  } catch(e){ showToast('Error: '+e.message); }
+}
+
+// ===== RESET ALL DOWNLOADS =====
+async function resetAllDownloads(){
+  if(!confirm('සියලුම movies Downloads Count 0 reset කරන්නද?\nUndo කරන්න බෑ!')) return;
+  try{
+    await Promise.all(movies.map(m=>db.ref('movies/'+m.id+'/downloads_count').set(0)));
+    movies.forEach(m=>{ m.downloads_count=0; });
+    showToast('✓ All Download counts reset!');
+    updateStats();
+    loadAdminMovies();
+  }catch(e){ showToast('Error: '+e.message); }
+}
+
+// ===== RESET ALL VIEWS =====
+async function resetAllViews(){
+  if(!confirm('සියලුම movies Views 0 reset කරන්නද?\nUndo කරන්න බෑ!')) return;
+  try{
+    await Promise.all(movies.map(m=>db.ref('movies/'+m.id+'/views').set(0)));
+    movies.forEach(m=>{ m.views=0; });
+    showToast('✓ All Views reset!');
+    updateStats();
+    loadAdminMovies();
+  }catch(e){ showToast('Error: '+e.message); }
+}
+function loadAdminRequests(){
+  const list = document.getElementById('adminRequestList');
+  if(!list) return;
+  list.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px">Loading...</div>';
+  db.ref('requests').orderByChild('time').once('value').then(snap=>{
+    const items = [];
+    snap.forEach(child => items.unshift({...child.val(), key: child.key}));
+    if(items.length === 0){
+      list.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px">No requests yet.</div>';
+      return;
+    }
+    list.innerHTML = items.map(r=>`
+      <div style="background:var(--bg3);border-radius:10px;padding:12px;margin-bottom:10px;display:flex;align-items:center;gap:10px">
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px">🎬 ${r.movie}</div>
+          <div style="font-size:11px;color:var(--text3)">👤 ${r.user} · 👍 ${r.votes||1} votes · ${new Date(r.time).toLocaleDateString('si-LK')}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+          <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;background:${r.status==='done'?'rgba(34,197,94,0.2)':'rgba(232,38,42,0.15)'};color:${r.status==='done'?'#22c55e':'var(--red)'}">${r.status==='done'?'✓ ADDED':'PENDING'}</span>
+          <div style="display:flex;gap:5px">
+            ${r.status!=='done'?`<button onclick="markRequestDone('${r.key}')" style="background:rgba(34,197,94,0.2);color:#22c55e;border:1px solid rgba(34,197,94,0.4);border-radius:6px;padding:4px 8px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif">✓ Added</button>`:''}
+            <button onclick="deleteRequest('${r.key}')" style="background:rgba(232,38,42,0.15);color:var(--red);border:1px solid rgba(232,38,42,0.4);border-radius:6px;padding:4px 8px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif">🗑 Delete</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }).catch(()=>{
+    list.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px">Could not load.</div>';
+  });
+}
+
+function markRequestDone(key){
+  fetch('https://sutable-99848-default-rtdb.firebaseio.com/requests/' + key + '/status.json' + (_authToken ? '?auth=' + _authToken : ''), {
+    method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify('done')
+  }).then(function(){ showToast('✓ Request marked as added!'); loadAdminRequests(); })
+    .catch(function(e){ showToast('Error: ' + e.message); });
+}
+
+function deleteRequest(key){
+  if(!confirm('මේ request delete කරන්නද?')) return;
+  fetch('https://sutable-99848-default-rtdb.firebaseio.com/requests/' + key + '.json' + (_authToken ? '?auth=' + _authToken : ''), {
+    method: 'DELETE'
+  }).then(function(){ showToast('🗑 Request deleted!'); loadAdminRequests(); })
+    .catch(function(e){ showToast('Error: ' + e.message); });
+}
+
+// ===== BANNER SETTINGS (simplified for admin) =====
+function saveBanner(){
+  const text = document.getElementById('settingBannerText').value.trim();
+  if(!text){ showToast('Banner message is empty!'); return; }
+  const type = document.getElementById('settingBannerType').value;
+  const icon = document.getElementById('settingBannerIcon').value || '📢';
+  const link = document.getElementById('settingBannerLink') ? document.getElementById('settingBannerLink').value.trim() : '';
+  const linkLabel = document.getElementById('settingBannerLinkLabel') ? document.getElementById('settingBannerLinkLabel').value.trim() : '';
+  const scroll = document.getElementById('settingBannerScroll') ? document.getElementById('settingBannerScroll').value === 'true' : false;
+  const bannerData = {text, type, icon, link, linkLabel, scroll, active:true};
+  db.ref('settings/banner').set(bannerData).then(()=>{
+    showToast('✓ Banner published!');
+  });
+}
+function hideBanner(){
+  db.ref('settings/banner').set({active:false}).then(()=>{
+    showToast('Banner hidden.');
+  });
+}
+// ===== ADMIN LOGIN / SESSION =====
+function doAdminLogin(){
+  const pass=document.getElementById('loginPassword').value;
+  const errEl=document.getElementById('loginError');
+  errEl.style.display='none';
+  if(pass==='cineflix@2026'){
+    _authUser={email:'admin@cineflix.lk',uid:'admin'};
+    auth.currentUser=_authUser;
+    _authListeners.forEach(cb=>cb(_authUser));
+    document.getElementById('adminLogin').classList.remove('show');
+    showAdminPage();
+  } else {
+    errEl.style.display='block';
+  }
+}
+function closeAdminLogin(){
+  // No public site to go back to from here, redirect to main site
+  window.location.href='https://cineflix-lk.vercel.app/';
+}
+function adminLogout(){
+  isAdmin=false;
+  auth.signOut().then(()=>{
+    document.getElementById('adminPage').style.display='none';
+    document.getElementById('adminLogin').classList.add('show');
+  });
+}
+function showAdminPage(){
+  isAdmin=true;
+  const user=auth.currentUser;
+  document.getElementById('adminUserLabel').textContent=user?user.email:'';
+  document.getElementById('adminLogin').classList.remove('show');
+  document.getElementById('adminPage').style.display='block';
+  loadAdminMovies();
+  updateStats();
+  // Pre-fill banner settings
+  db.ref('settings/banner').once('value').then(snap=>{
+    const data=snap.val();
+    if(data && document.getElementById('settingBannerText')){
+      document.getElementById('settingBannerText').value=data.text||'';
+      if(data.type) document.getElementById('settingBannerType').value=data.type;
+      document.getElementById('settingBannerIcon').value=data.icon||'📢';
+      if(document.getElementById('settingBannerLink')) document.getElementById('settingBannerLink').value=data.link||'';
+      if(document.getElementById('settingBannerLinkLabel')) document.getElementById('settingBannerLinkLabel').value=data.linkLabel||'';
+      if(document.getElementById('settingBannerScroll')) document.getElementById('settingBannerScroll').value=data.scroll?'true':'false';
+    }
+  }).catch(()=>{});
+  window.scrollTo(0,0);
+}
+
+// ===== ON LOAD =====
+window.addEventListener('DOMContentLoaded', ()=>{
+  auth.onAuthStateChanged(user=>{
+    if(user){
+      showAdminPage();
+    } else {
+      document.getElementById('adminLogin').classList.add('show');
+    }
+  });
+  loadMovies();
+
+  // Wire confirm submit button (TMDB confirm modal not used here, kept for safety)
+});
+</script>
+</body>
+</html>
